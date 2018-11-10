@@ -66,7 +66,7 @@
             //move_uploaded_file(テンポラリーファイル,アップロード先パス)
             //テンポラリーファイル：$_FILES['キー']['tmp_name']で取得できる
             //../user_profile_img'.$submit_file_nameと文字連結することで保存先を指定する
-            move_uploaded_file($_FILES['input_img_name']['tmp_name'],'../user_profile_img' . $submit_file_name);
+            move_uploaded_file($_FILES['input_img_name']['tmp_name'], '../user_profile_img/' . $submit_file_name);
             //簡易データベースsessionに値を保存する
             //sessionはサーバー内全てのファイルで共通しているため、キーをもうけ多次元配列化し他のシステムとの重複を防いだ上で保存する必要がある。
             //sessionというタンスは１つしかないが、タンスを増やせばたくさんの内容を保存できる
@@ -75,12 +75,12 @@
             $_SESSION['register']['password'] = $_POST['input_password'];
             $_SESSION['register']['img_name'] = $submit_file_name;
 
-            //header()関数:リダイレクト処理
-            //“Location:”とURLを指定で、指定したURLのブラウザを表示できる。
+            // header()関数:リダイレクト処理
+            // “Location:”とURLを指定で、指定したURLのブラウザを表示できる。
             //exit()スクリプトの終了
             //header()関数の使用だとPOST送信はリセットされる
-            // header('Location: check.php');
-            // exit();
+            header('Location: check.php');
+            exit();
          }
    }
 
