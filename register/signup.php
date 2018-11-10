@@ -1,9 +1,18 @@
 <?php
-    
+    //session:各サーバーに用意された一時的にデータを保存することができる機能(簡易データベースのような存在) 中身の構造は連想配列
+    //sessiomの使用条件：ファイルの最初にsession_start()を宣言する必要がある
+    session_start();
     //「エラーだった場合に何エラーかを保存するための$errors配列を定義」
     $errors = array();
+    //はじめ$_POSTされてない時のために空の値を定義
+    $name = '';
+    $email = '';
+    $password = '';
+    $file_name = '';
+
     //POST送信されていたら、その中身を変数定義する
     if (!empty($_POST)) {
+      //はじめ$_POSTされてない時のために空の値を定義
       $name = $_POST['input_name'];
       $email = $_POST['input_email'];
       $password = $_POST['input_password'];
@@ -40,32 +49,40 @@
       }else{
         $errors['img_name'] = 'blank';
       }
-    }
+
 
     //$errorsが空だった場合はバリデーション成功
     //バリデーション成功時の処理
     //⑴プロフィール画像のアップロード
     //⑵セッションへ送信データを保存する
     //DBは基本的に文字や数字データを管理します。そのため、ユーザーが送信した画像データを指定したフォルダへアップロードし、DBにはアップロードされた画像の名前を文字データで保存しする必要がある。保存した画像を取得して表示したい場合は、画像名をDBから取得しimgタグのパスへセットする形でフォルダへアップロードされた画像を表示する。
-    if (empty($errors)) {
-        //成功時の処理を記述する
-        //一意のファイル名を生成 date()関数を使用
-      date_default_timezone_set('Asia/Manila'); //フィリピン時間に設定
-      $date_str = date('YmdHis');//現在の時刻を年月日時間分秒のフォーマットで表示
-      $submit_file_name = $date_str.$filename
-      //move_uploaded_file()関数:画像をアップロード
-      //move_uploaded_file(テンポラリーファイル,アップロード先パス)
-      //テンポラリーファイル：$_FILES['キー']['tmp_name']で取得できる
-      //../user_profile_img'.$submit_file_nameと文字連結することで保存先を指定する
-      move_uploaded_file($_FILES['input_img_name']['tmp_name'],'../user_profile_img'.$submit_file_name)
+        if (empty($errors)) {
+            //成功時の処理を記述する
+            //一意のファイル名を生成 date()関数を使用
+            date_default_timezone_set('Asia/Manila'); //フィリピン時間に設定
+            $date_str = date('YmdHis');//現在の時刻を年月日時間分秒のフォーマットで表示
+            $submit_file_name = $date_str . $file_name;
+            //move_uploaded_file()関数:画像をアップロード
+            //move_uploaded_file(テンポラリーファイル,アップロード先パス)
+            //テンポラリーファイル：$_FILES['キー']['tmp_name']で取得できる
+            //../user_profile_img'.$submit_file_nameと文字連結することで保存先を指定する
+            move_uploaded_file($_FILES['input_img_name']['tmp_name'],'../user_profile_img' . $submit_file_name);
+            //簡易データベースsessionに値を保存する
+            //sessionはサーバー内全てのファイルで共通しているため、キーをもうけ多次元配列化し他のシステムとの重複を防いだ上で保存する必要がある。
+            //sessionというタンスは１つしかないが、タンスを増やせばたくさんの内容を保存できる
+            $_SESSION['register']['name'] = $_POST['input_name'];
+            $_SESSION['register']['email'] = $_POST['input_email'];
+            $_SESSION['register']['password'] = $_POST['input_password'];
+            $_SESSION['register']['img_name'] = $submit_file_name;
 
-      //header()関数:リダイレクト処理
-      //“Location:”とURLを指定で、指定したURLのブラウザを表示できる。
-      //exit()スクリプトの終了
-      //header()関数の使用だとPOST送信はリセットされる
-      header('Location: cheak.php');
-      exit();
-    }
+            //header()関数:リダイレクト処理
+            //“Location:”とURLを指定で、指定したURLのブラウザを表示できる。
+            //exit()スクリプトの終了
+            //header()関数の使用だとPOST送信はリセットされる
+            // header('Location: check.php');
+            // exit();
+         }
+   }
 
 
     ?>
