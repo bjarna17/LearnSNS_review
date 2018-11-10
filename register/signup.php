@@ -16,11 +16,33 @@
         $errors['email'] = 'blank';
       }
       //パスワードの空チェック
+      //strlen:文字列の長さを取得する(日本語はmb_strlen)
+      $count = strlen($password);
       if ($password = '') {
         $errors['password'] = 'blank';
+      }elseif ($count < 4 || 16 < $count) {
+        $errors['password'] = 'length';
       }
+    //$_FILES['キー']['name'] 画像名を取得
+    //$_FILES['キー']['tmp_name'] 送信された画像データそのものを取得
+    //画像名を取得し、空だった場合は$errorsに値を代入する
+      $file_name = $_FILES['input_img_name']['name'];
+      if (!empty($file_name)) {
+        //拡張子のチェックの処理
+        //substr()関数は指定した文字列を取得する
+        //strlower()関数は大文字を小文字に変換する
+        $file_type = substr($file_name,-3);//画像名の後ろから３文字を取得
+        $file_type = strtolower($file_type);//大文字が含まれていた場合全て小文字化
+        if ($file_type != 'jpg' && $file_type != 'png' && $file_type != 'gif') {
+          $errors['img_name'] = 'type';
+        }
+      }else{
+        $errors['img_name'] = 'blank';
+      }
+
     }
-?>
+
+    ?>
 
 <!DOCTYPE html>
 <html lang="ja">
@@ -28,7 +50,7 @@
   <meta charset="utf-8">
   <title>LearnSNS</title>
   <!-- linkタグ：リンクする外部リソースを指定する -->
-  <link rel="stylesheet" type="text/css" href="href=../assets/css/bootstrap.css">
+  <link rel="stylesheet" type="text/css" href="../assets/css/bootstrap.css">
   <link rel="stylesheet" type="text/css" href="../assets/font-awesome/css/font-awesome.css">
   <link rel="stylesheet" type="text/css" href="../assets/css/style.css">
 </head>
@@ -61,14 +83,23 @@
           <div class="form-group">
             <label for="password">パスワード</label>
             <input type="password" name="input_password" class="form-control" id="password" placeholder="4~16文字のパスワード">
-            <?php if (isset($errors['password'])&&$errors['password'] == 'blank') { ?>
-              <p class="text-danger">パスワードを入力してください</p>
+            <?php if (isset($errors['password'])&&$errors['password'] == 'length') { ?>
+              <p class="text-danger">パスワードは4~16文字で入力してください</p>
             <?php } ?>
           </div>
+          <!-- ファイルは$_POSTで受け取れない -->
+          <!-- $_FILES:ファイルアップロード専用 ⑴POST送信されている ⑵multipart/form-data-->
            <div class="form-group">
-            <label for="img_name">パスワード</label>
-            <input type="password" name="input_password" class="form-control" id="password" placeholder="4~16文字のパスワード">
+            <label for="img_name">プロフィール画像</label>
+            <input type="file" name="input_img_name" id="img_name" accept="image/*">
+            <!-- accerpt属性:accept="image/*: 画像ファイルのみ選択可とする -->
           </div>
+          <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'blank') { ?>
+              <p class="text-danger">画像を選択してください</p>
+            <?php } ?>
+            <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'type') { ?>
+              <p class="text-danger">拡張子が「jpg」「png」「gif」の画像を洗濯してください</p>
+            <?php } ?>
           <input type="submit" class="btn btn-default" value="確認">
           <a href="../signin.php" style="float: right; padding-top: 6px;" class="text-success">サインイン</a>
         </form>
