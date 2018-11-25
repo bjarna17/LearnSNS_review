@@ -3,7 +3,7 @@
 //PDO (PHP Data Object)
 // オブジェクト指向というものを使っている
 //XAMPP環境ではユーザー名は「root」、パスワードは空になる
-$dsn = 'mysql:dbname=LearnSNS;host=localhost';
+$dsn = 'mysql:dbname=LearnSNS_review;host=localhost';
 $user = 'root';
 $password = '';
 $dbh = new PDO($dsn,$user,$password);
