@@ -4,11 +4,23 @@
     session_start();
     //「エラーだった場合に何エラーかを保存するための$errors配列を定義」
     $errors = array();
-    //はじめ$_POSTされてない時のために空の値を定義
+    // valueの初期値はPOSTした後や「戻る」ボタンに対応するためのもの
+    //これらがされてない時、未定義のエラーを出さないようにするために空の値を定義
     $name = '';
     $email = '';
     $password = '';
     $file_name = '';
+
+    //戻るボタンが押されていた場合のデータの引き継ぎ
+    //パラメータがあったら、$_POSTを擬似的に作る→値を入力したことにする
+    //$errorsに値を入れることで、check.phpには飛ばないようにする
+    if (isset($_GET['action']) && $_GET['action']=='rewrite') {
+        $_POST['input_name'] = $_SESSION['register']['name'];
+        $_POST['input_email'] = $_SESSION['register']['email'];
+        $_POST['input_password'] = $_SESSION['register']['password'];
+
+        $errors['rewrite'] = true;
+    }
 
     //POST送信されていたら、その中身を変数定義する
     if (!empty($_POST)) {
@@ -33,56 +45,74 @@
       }elseif ($count < 4 || 16 < $count) {
         $errors['password'] = 'length';
       }
-    //$_FILES['キー']['name'] 画像名を取得
-    //$_FILES['キー']['tmp_name'] 送信された画像データそのものを取得
-    //画像名を取得し、空だった場合は$errorsに値を代入する
-      $file_name = $_FILES['input_img_name']['name'];
-      if (!empty($file_name)) {
+        //$_FILESから画像を拾ってくるのはパラメータがない時だけにする
+        if (!isset($_GET['action'])) {
+            //$_FILES['キー']['name'] 画像名を取得
+            //$_FILES['キー']['tmp_name'] 送信された画像データそのものを取得
+            //画像名を取得する
+            $file_name = $_FILES['input_img_name']['name'];
+        }
+        if (!empty($file_name)) {
         //拡張子のチェックの処理
         //substr()関数は指定した文字列を取得する
         //strlower()関数は大文字を小文字に変換する
-        $file_type = substr($file_name,-3);//画像名の後ろから３文字を取得
-        $file_type = strtolower($file_type);//大文字が含まれていた場合全て小文字化
-        if ($file_type != 'jpg' && $file_type != 'png' && $file_type != 'gif') {
-          $errors['img_name'] = 'type';
+            $file_type = substr($file_name,-3);//画像名の後ろから３文字を取得
+            $file_type = strtolower($file_type);//大文字が含まれていた場合全て小文字化
+            if ($file_type != 'jpg' && $file_type != 'png' && $file_type != 'gif') {
+                $errors['img_name'] = 'type';
+            }
+        //POSTが空だった場合は$errorsに値を代入する
+        }else{
+            $errors['img_name'] = 'blank';
         }
-      }else{
-        $errors['img_name'] = 'blank';
-      }
 
 
-    //$errorsが空だった場合はバリデーション成功
-    //バリデーション成功時の処理
-    //⑴プロフィール画像のアップロード
-    //⑵セッションへ送信データを保存する
-    //DBは基本的に文字や数字データを管理します。そのため、ユーザーが送信した画像データを指定したフォルダへアップロードし、DBにはアップロードされた画像の名前を文字データで保存しする必要がある。保存した画像を取得して表示したい場合は、画像名をDBから取得しimgタグのパスへセットする形でフォルダへアップロードされた画像を表示する。
+        //$errorsが空だった場合はバリデーション成功
+        //バリデーション成功時の処理
+        //⑴プロフィール画像のアップロード
+        //⑵セッションへ送信データを保存する
+        //DBは基本的に文字や数字データを管理します。そのため、ユーザーが送信した画像データを指定したフォルダへアップロードし、DBにはアップロードされた画像の名前を文字データで保存しする必要がある。保存した画像を取得して表示したい場合は、画像名をDBから取得しimgタグのパスへセットする形でフォルダへアップロードされた画像を表示する。
         if (empty($errors)) {
             //成功時の処理を記述する
             //一意のファイル名を生成 date()関数を使用
             date_default_timezone_set('Asia/Manila'); //フィリピン時間に設定
             $date_str = date('YmdHis');//現在の時刻を年月日時間分秒のフォーマットで表示
             $submit_file_name = $date_str . $file_name;
-            //move_uploaded_file()関数:画像をアップロード
+            //move_uploaded_file()関数:画像をアップロード(DBの文字列情報しか保存できないためフォルダへの保存が必要)
             //move_uploaded_file(テンポラリーファイル,アップロード先パス)
             //テンポラリーファイル：$_FILES['キー']['tmp_name']で取得できる
             //../user_profile_img'.$submit_file_nameと文字連結することで保存先を指定する
             move_uploaded_file($_FILES['input_img_name']['tmp_name'], '../user_profile_img/' . $submit_file_name);
-            //簡易データベースsessionに値を保存する
+            //各サーバーに用意された簡易データベースsessionに値を保存する
             //sessionはサーバー内全てのファイルで共通しているため、キーをもうけ多次元配列化し他のシステムとの重複を防いだ上で保存する必要がある。
             //sessionというタンスは１つしかないが、タンスを増やせばたくさんの内容を保存できる
+            //POST送信データをSESSIONに保存する処理
             $_SESSION['register']['name'] = $_POST['input_name'];
             $_SESSION['register']['email'] = $_POST['input_email'];
             $_SESSION['register']['password'] = $_POST['input_password'];
             $_SESSION['register']['img_name'] = $submit_file_name;
 
-            // header()関数:リダイレクト処理
+            // header()関数:リダイレクト処理(あるページから別のページに転送することを指す)
             // “Location:”とURLを指定で、指定したURLのブラウザを表示できる。
             //exit()スクリプトの終了
             //header()関数の使用だとPOST送信はリセットされる
             header('Location: check.php');
             exit();
          }
-   }
+    }
+
+    //戻るボタンの際の処理
+    //パラメータが存在する時 = セッションに前回の入力情報も存在
+    //sessionから前回入力情報を使って$_POSTを擬似的に作成し、!empty()のif文が実行されるようにする。
+    if (isset($_GET['action'])&&$_GET['action']=='rewrite') {
+        $_POST['input_name'] = $_SESSION['register']['name'];
+        $_POST['input_email'] = $_SESSION['register']['email'];
+        $_POST['input_password'] = $_SESSION['register']['password'];
+
+        //$errorsが空にならないようにする
+        //空のままだとすべての処理を行ってcheck.phpに遷移しまうから。
+        $errors['rewrite'] = true;
+    }
 
 
     ?>
@@ -97,19 +127,22 @@
   <link rel="stylesheet" type="text/css" href="../assets/font-awesome/css/font-awesome.css">
   <link rel="stylesheet" type="text/css" href="../assets/css/style.css">
 </head>
+<!-- margin:ボックス外側の余白 -->
 <body style="margin-top: 60px">
   <div class="container">
     <div class="row">
       <!-- thumbnail:お試し縮小表示画像のこと。 -->
       <!-- col:表の縦列の属性やスタイルを指定する -->
       <!-- xs:画面幅Extra small -->
+      <!-- すべてのデザインはBootstrap3に定義されたclassを使用しています。 -->
       <div class="col-xs-8 col-xs-offest-2 thumbnail">
         <h2 class="text-center content_header">アカウント作成</h2>
         <form method="POST" action="signup.php" enctype="multipart/form-data">
           <div class="form-group">
             <!-- label:フォーム部品と項目名（ラベル）を関連付ける -->
+            <!-- nameとemailのvalue属性は戻ってきた時のために変数をセットして値を保持 -->
             <label for="name">ユーザー名</label>
-            <input type="text" name="input_name" class="form-control" id="name" placeholder="山田太郎">
+            <input type="text" name="input_name" class="form-control" id="name" placeholder="山田太郎" value=<?php echo htmlspecialchars($name) ?>>
             <!--「HTMLのユーザー名入力フォーム下にもし$errors配列のnameキーが存在し、blankという値が入っていた場合はエラーメッセージユーザー名を入力してくださいを出力」 -->
             <!-- isset()は引数に指定した変数が定義されているかどうか調べる関数 -->
             <?php if (isset($errors['name'])&&$errors['name'] == 'blank') { ?>
@@ -118,7 +151,7 @@
           </div>
           <div class="form-group">
             <label for="email">メールアドレス</label>
-            <input type="email" name="input_email" class="form-control" id="email" placeholder="example@gmail.com">
+            <input type="email" name="input_email" class="form-control" id="email" placeholder="example@gmail.com" value=<?php echo htmlspecialchars($email)?>>
             <?php if (isset($errors['email'])&&$errors['email'] == 'blank') { ?>
               <p class="text-danger">メールアドレスを入力してください</p>
             <?php } ?>
@@ -126,23 +159,30 @@
           <div class="form-group">
             <label for="password">パスワード</label>
             <input type="password" name="input_password" class="form-control" id="password" placeholder="4~16文字のパスワード">
-            <?php if (isset($errors['password'])&&$errors['password'] == 'length') { ?>
+            <?php if (isset($errors['password']) && $errors['password'] == 'blank') { ?>
+              <p class="text-danger">パスワードを入力してください</p>
+            <?php } ?>
+            <?php if (isset($errors['password'])&& $errors['password'] == 'length') { ?>
               <p class="text-danger">パスワードは4~16文字で入力してください</p>
             <?php } ?>
-          </div>
-          <!-- ファイルは$_POSTで受け取れない -->
-          <!-- $_FILES:ファイルアップロード専用 ⑴POST送信されている ⑵multipart/form-data-->
-           <div class="form-group">
-            <label for="img_name">プロフィール画像</label>
-            <input type="file" name="input_img_name" id="img_name" accept="image/*">
-            <!-- accerpt属性:accept="image/*: 画像ファイルのみ選択可とする -->
-          </div>
-          <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'blank') { ?>
-              <p class="text-danger">画像を選択してください</p>
+            <!-- $errorsが空じゃなければもう一度打ってもらうようにプログラムする -->
+            <?php if (!empty($errors)) { ?>
+              <p class="text-danger">パスワードを再度入力してください</p>
             <?php } ?>
-            <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'type') { ?>
-              <p class="text-danger">拡張子が「jpg」「png」「gif」の画像を洗濯してください</p>
-            <?php } ?>
+          </div>
+          <!-- input type ='file'は$_POSTで送信データを受け取ることができない。 -->
+          <!-- $_FILES:ファイルアップロード専用を使用する ⑴POST送信されている ⑵multipart/form-data-->
+            <div class="form-group">
+              <label for="img_name">プロフィール画像</label>
+              <input type="file" name="input_img_name" id="img_name" accept="image/*">
+              <!-- accerpt属性:accept="image/*: 画像ファイルのみ選択可とする -->
+              <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'blank') { ?>
+                <p class="text-danger">画像を選択してください</p>
+              <?php } ?>
+              <?php if (isset($errors['img_name'])&&$errors['img_name'] == 'type') { ?>
+                <p class="text-danger">拡張子が「jpg」「png」「gif」の画像を洗濯してください</p>
+              <?php } ?>
+            </div>
           <input type="submit" class="btn btn-default" value="確認">
           <a href="../signin.php" style="float: right; padding-top: 6px;" class="text-success">サインイン</a>
         </form>
