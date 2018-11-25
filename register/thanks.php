@@ -16,6 +16,10 @@
     <div class="row">
       <div class="col-xs-8 col-xs-offset-2 thumbnail">
         <h2 class="text-center content_header">アカウント作成完了</h2>
+        <div class="text-center">
+          <p>ユーザーのアカウント作成が完了しました</p>
+          <a href="../signin.php" class="btn btn-info">サインイン</a>
+        </div>
       </div>
     </div>
   </div>
