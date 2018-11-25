@@ -11,6 +11,13 @@
       header('Location: signup.php');
       exit();
     }
+    
+    //$_SESSIONをわかりやすい名前で変数化する
+    $name = $_SESSION['register']['name'];
+    $email = $_SESSION['register']['email'];
+    $password = $_SESSION['register']['password'];
+    $img_name = $_SESSION['register']['img_name'];
+
     //登録ボタンが押された時に処理する
     if (!empty($_POST)) {
         //INSERT INTO `①テーブル名` SET `②カラム1`=③値1  , `カラム2`=値2 ...
@@ -31,13 +38,6 @@
         header('Location: thanks.php');
         exit();
     }
-
-    //$_SESSIONをわかりやすい名前で変数化する
-
-    $name = $_SESSION['register']['name'];
-    $email = $_SESSION['register']['email'];
-    $password = $_SESSION['register']['password'];
-    $img_name = $_SESSION['register']['img_name'];
 ?>
 <!DOCTYPE html>
 <html lang="ja">

@@ -9,7 +9,7 @@ $password = '';
 $dbh = new PDO($dsn,$user,$password);
 //SQL文にエラーがあった際、画面にエラーを出力する設定
 $dbh->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
-$dbh->query('SET NAME utf8')
+$dbh->query('SET NAMES utf8');
 
 //sql文実行の基本構文
 //$sql = 'ここにSQL文を書く';
