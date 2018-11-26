@@ -26,6 +26,36 @@
         }
     }
 
+    //投稿表示機能->POSTに関係なく表示
+    //テーブル結合：複数テーブルから一気にデータを取得すること
+    //外部キーと主キーを結合条件として複数テーブルから一気にデータを取得
+    //内部結合:２つのテーブルから条件が成立するレコードのみが取り出す
+    //LEFT OUTER JOIN: 左側のテーブルを軸にして外部結合を行う方法
+    //RIGHT OUTER JOIN:右側のテーブルを軸にして外部結合を行う方法
+    //DESC 大きい数字から小さい数字に並べる
+    //ASC 小さい数字から大きい数字に並べる
+    $sql = 'SELECT `f`.*, `u`.`name`, `u`.`img_name` FROM `feeds` AS `f` LEFT JOIN `users` AS `u` ON `f`.`user_id` = `u`.`id` ORDER BY `created` DESC LIMIT 5';
+    //テーブル名.カラム名
+    //FROM テーブル１ JOIN テーブル２ ON 条件
+    //feedsテーブルの全てとusersテーブルの一部(名前と写真)を読み出す
+    //ASを使ってテーブルをリネームできる
+    //ORDER BY 順番の指定
+    //LIMIT句:取得するデータの行数を指定
+    $data = array();
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($data);
+    //投稿データを全て格納する配列
+    $feeds = array();
+    //繰り返す回数が決まっていないときはwhile文を使用
+    while (true) {
+        $record = $stmt->fetch(PDO::FETCH_ASSOC);
+        //fetchはデータがないときにfalseを返す性質がある
+        if ($record == false) {
+            break;
+        }
+        $feeds[] = $record;//[]は配列の末尾にデータを追加するという意味
+        //if文を下に書くとfalseも配列の中に入ってしまう
+    }
 
 ?>
 
@@ -95,19 +125,20 @@
             <input type="submit" value="投稿する" class="btn btn-primary">
           </form>
         </div>
+          <?php foreach($feeds as $feed) { ?>
           <div class="thumbnail">
             <div class="row">
               <div class="col-xs-1">
-                <img src="https://placehold.jp/40x40.png" width="40">
+                <img src="user_profile_img/<?php echo $feed['img_name'] ?>" width="40">
               </div>
               <div class="col-xs-11">
-                野原ひろし<br>
-                <a href="#" style="color: #7F7F7F;">2018-03-03</a>
+                <?php echo $feed['name']; ?><br>
+                <a href="#" style="color: #7F7F7F;"><?php echo $feed['created'] ?></a>
               </div>
             </div>
             <div class="row feed_content">
               <div class="col-xs-12" >
-                <span style="font-size: 24px;">夢は逃げない。逃げるのはいつも自分だ。</span>
+                <span style="font-size: 24px;"><?php echo $feed['feed'] ?></span>
               </div>
             </div>
             <div class="row feed_sub">
@@ -115,15 +146,22 @@
                 <form method="POST" action="" style="display: inline;">
                   <input type="hidden" name="feed_id" >
                     <input type="hidden" name="like" value="like">
-                    <button type="submit" class="btn btn-default btn-xs"><i class="fa fa-thumbs-up" aria-hidden="true"></i>いいね！</button>
+                    <span hidden><?php $feed['id']; ?></span>
+                    <button tclass="btn btn-default btn-xs js-like"><i class="fa fa-thumbs-up" aria-hidden="true"></i><span>いいね！</span></button>
                 </form>
-                <span class="like_count">いいね数 : 100</span>
+                <span >いいね数 : </span>
                 <span class="comment_count">コメント数 : 9</span>
-                  <a href="#" class="btn btn-success btn-xs">編集</a>
-                  <a href="#" class="btn btn-danger btn-xs">削除</a>
+                <?php if ($feed['user_id'] == $_SESSION['id']) :?>
+                  <a href="edit.php?feed_id=<?php echo $feed['id'] ?>" class="btn btn-success btn-xs">編集</a>
+                  <a onclick="return confirm('本当に消すの？');" href="delete.php?feed_id=<?php echo $feed['id'] ?>" class="btn btn-danger btn-xs">削除</a>
+                <?php endif; ?>
+                  <!-- onclickイベント:HTMLドキュメント内の要素をクリックした際に起こるイベント処理。JavaScript -->
+                  <!-- onclickによってクリック後に発動してほしい関数を指定する事が出来る。 -->
+                  <!-- confirmメソッド:ウェブページに確認ダイアログを表示させる事が出来る。引数に設定した文字列をダイアログに表示する -->
               </div>
             </div>
           </div>
+        <?php } ?>
         <div aria-label="Page navigation">
           <ul class="pager">
             <li class="previous disabled"><a href="#"><span aria-hidden="true">&larr;</span> Newer</a></li>
