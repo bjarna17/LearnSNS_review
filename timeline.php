@@ -1,20 +1,34 @@
 <?php
-session_start();
-require('dbconnect.php');
+    session_start();
+    require('dbconnect.php');
 
-$sql = 'SELECT * FROM `users` WHERE `id` = ?';
-$data = array($_SESSION['id']);
-$stmt = $dbh->prepare($sql);
-$stmt->execute($data);
-$signin_user = $stmt->fetch(PDO::FETCH_ASSOC);
+    $sql = 'SELECT * FROM `users` WHERE `id` = ?';
+    $data = array($_SESSION['id']);
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($data);
+    $signin_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // var_dump($signin_user);
 
+    $errors = [];
+    if(!empty($_POST)){
+        $feed = $_POST['feed'];
+        if($feed != ''){
+          //投稿処理
+          $sql = 'INSERT INTO `feeds` SET `feed`=?, `user_id`=?, `created`= NOW()';
+          $data = array($feed,$signin_user['id']);
+          $stmt = $dbh->prepare($sql);
+          $stmt->execute($data);
+          header('Location: timeline.php');
+          exit();
+        }else{
+            $errors['feed'] = 'blank';
+        }
+    }
+
 
 ?>
-?php
-  // timeline.phpの処理を記載
-?>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -74,6 +88,9 @@ $signin_user = $stmt->fetch(PDO::FETCH_ASSOC);
           <form method="POST" action="">
             <div class="form-group">
               <textarea name="feed" class="form-control" rows="3" placeholder="Happy Hacking!" style="font-size: 24px;"></textarea><br>
+              <?php if (isset($errors['feed']) && $errors['feed']=='blank') { ?>
+                <p class='alert alert-danger'>投稿データを入力して下さい</p>
+              <?php } ?>
             </div>
             <input type="submit" value="投稿する" class="btn btn-primary">
           </form>
